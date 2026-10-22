@@ -3,8 +3,8 @@ package dev.reveles.model;
 public class DoubleNode<T>
 {
     private T data;
-    private Node<T> prev;
-    private Node<T> next;
+    private DoubleNode<T> prev;
+    private DoubleNode<T> next;
 
     // ------------------------------
 
@@ -18,10 +18,10 @@ public class DoubleNode<T>
     // ------------------------------
 
     public void setData(T newData) {data = newData;}
-    public void setPrev(Node<T> newPrev) {prev = newPrev;}
-    public void setNext(Node<T> newNext) {next = newNext;}
+    public void setPrev(DoubleNode<T> newPrev) {prev = newPrev;}
+    public void setNext(DoubleNode<T> newNext) {next = newNext;}
 
     public T getData() {return data;}
-    public Node<T> getPrev() {return prev;}
-    public Node<T> getNext() {return next;}
+    public DoubleNode<T> getPrev() {return prev;}
+    public DoubleNode<T> getNext() {return next;}
 }
