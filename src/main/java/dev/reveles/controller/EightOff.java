@@ -198,11 +198,6 @@ public class EightOff
             return false;
         }
 
-        if(card.getSuit().ordinal() != i)
-        {
-            return false;
-        }
-
         Card top = foundations[i].getLast();
 
         if(top == null)
@@ -210,7 +205,9 @@ public class EightOff
             return card.getValue() == 1;
         }
 
-        return card.getValue() == top.getValue() + 1;
+        return
+            card.getSuit() == top.getSuit() &&
+            card.getValue() == top.getValue() + 1;
     }
 
     private SimpleList<Card> getMovableSequence(int col, int start)
@@ -646,5 +643,10 @@ public class EightOff
 
         gameOver = false;
         gameOver = !hasAvailableMoves();
+    }
+
+    public boolean canUndo()
+    {
+        return !history.isEmpty();
     }
 }

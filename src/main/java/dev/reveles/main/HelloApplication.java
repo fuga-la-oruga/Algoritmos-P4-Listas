@@ -12,7 +12,7 @@ public class HelloApplication extends Application
     {
         EightOffView view = new EightOffView();
 
-        Scene scene = new Scene(view.getRoot(), 900, 600);
+        Scene scene = new Scene(view.getRoot(), 900, 700);
 
         stage.setTitle("Eight Off");
         stage.setScene(scene);

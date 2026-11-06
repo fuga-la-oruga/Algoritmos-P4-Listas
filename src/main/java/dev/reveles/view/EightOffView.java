@@ -3,6 +3,7 @@ package dev.reveles.view;
 import dev.reveles.controller.EightOff;
 import dev.reveles.controller.Move;
 import dev.reveles.model.Card;
+import dev.reveles.model.SimpleList;
 import dev.reveles.model.Suit;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -31,6 +32,15 @@ public class EightOffView
     private int selectedSrcI = -1;
     private int selectedCardI = -1;
 
+    private Button hintBtn;
+    private Button undoBtn;
+    private Button resetBtn;
+
+    private boolean[][] hintedTable = new boolean[8][52];
+    private boolean[] hintedReserve = new boolean[8];
+
+    private boolean showingHints;
+
     // ------------------------------
 
     public EightOffView()
@@ -45,7 +55,7 @@ public class EightOffView
 
     private void createLayout()
     {
-        root = new VBox(75);
+        root = new VBox(175);
         root.setPadding(new Insets(20));
         root.setAlignment(Pos.TOP_CENTER);
         root.setStyle("-fx-background-color: #24543D;");
@@ -130,8 +140,11 @@ public class EightOffView
         pane.setMinSize(CARD_WIDTH, height);
         pane.setMaxSize(CARD_WIDTH, height);
 
-        String borderColor = isSelectedTableCard(col, cardI) ? "#FFD54F" : "#252525";
-        double borderWidth = isSelectedTableCard(col, cardI) ? 3 : 1.2;
+        boolean selected = isSelectedTableCard(col, cardI);
+        boolean hinted = hintedTable[col][cardI];
+
+        String borderColor = selected ? "#FFD54F" : hinted ? "#42A5F5" : "#252525";
+        double borderWidth = selected || hinted ? 3 : 1.2;
 
         pane.setStyle
         (
@@ -213,23 +226,23 @@ public class EightOffView
         HBox buttons = new HBox(15);
         buttons.setAlignment(Pos.CENTER);
 
-        Button hintButton = new Button("Pista");
-        Button undoButton = new Button("Deshacer");
-        Button restartButton = new Button("Reiniciar");
+        hintBtn = new Button("Pista");
+        undoBtn = new Button("Deshacer");
+        resetBtn = new Button("Reiniciar");
 
-        hintButton.setDisable(true);
-        undoButton.setDisable(true);
-        restartButton.setDisable(true);
+        hintBtn.setPrefWidth(110);
+        undoBtn.setPrefWidth(110);
+        resetBtn.setPrefWidth(110);
 
-        hintButton.setPrefWidth(110);
-        undoButton.setPrefWidth(110);
-        restartButton.setPrefWidth(110);
+        hintBtn.setOnAction(event -> showHints());
+        undoBtn.setOnAction(event -> undoMove());
+        resetBtn.setOnAction(event -> confirmRestart());
 
         buttons.getChildren().addAll
         (
-            hintButton,
-            undoButton,
-            restartButton
+            hintBtn,
+            undoBtn,
+            resetBtn
         );
 
         return buttons;
@@ -286,6 +299,8 @@ public class EightOffView
                 columns[i].getChildren().add(createCard(card, compact, i, j));
             }
         }
+
+        updateButtons();
     }
 
     private void resetEmptySlot(StackPane slot, Move.Location location, int index)
@@ -330,8 +345,9 @@ public class EightOffView
             selectedSrc == Move.Location.RESERVE &&
             selectedSrcI == i;
 
-        String borderColor = selected ? "#FFD54F" : "#252525";
-        double borderWidth = selected ? 3 : 1.2;
+        boolean hinted = location == Move.Location.RESERVE && hintedReserve[i];
+        String borderColor = selected ? "#FFD54F" : hinted ? "#42A5F5" : "#252525";
+        double borderWidth = selected || hinted ? 3 : 1.2;
 
         slot.setStyle
         (
@@ -434,10 +450,8 @@ public class EightOffView
 
         if(moved)
         {
-            selectedSrc = null;
-            selectedSrcI = -1;
-            selectedCardI = -1;
-
+            clearSelectionState();
+            clearHints();
             refreshBoard();
         }
         else
@@ -454,6 +468,120 @@ public class EightOffView
         }
 
         return "#222222";
+    }
+
+    private void showHints()
+    {
+        if(showingHints)
+        {
+            clearHints();
+        }
+        else
+        {
+            clearHints();
+
+            SimpleList<Move> hints = game.getHints();
+
+            for(int i = 0; i < hints.size(); i ++)
+            {
+                Move move = hints.get(i);
+
+                if(move.getSource() == Move.Location.TABLE)
+                {
+                    int col = move.getSourceIndex();
+                    int cardIndex = -1;
+
+                    for(int j = 0; j < game.getTableSize(col); j ++)
+                    {
+                        if(game.getTableCard(col, j) == move.getCard())
+                        {
+                            cardIndex = j;
+                            break;
+                        }
+                    }
+
+                    if(cardIndex != -1)
+                    {
+                        for(int j = 0; j < move.getCardCount(); j ++)
+                        {
+                            hintedTable[col][cardIndex + j] = true;
+                        }
+                    }
+                }
+                else if(move.getSource() == Move.Location.RESERVE)
+                {
+                    hintedReserve[move.getSourceIndex()] = true;
+                }
+            }
+
+            showingHints = true;
+        }
+
+        refreshBoard();
+    }
+
+    private void clearHints()
+    {
+        for(int i = 0; i < 8; i ++)
+        {
+            for(int j = 0; j < 52; j ++)
+            {
+                hintedTable[i][j] = false;
+            }
+
+            hintedReserve[i] = false;
+        }
+
+        showingHints = false;
+    }
+
+    private void undoMove()
+    {
+        if(game.undoMove())
+        {
+            clearSelectionState();
+            clearHints();
+            refreshBoard();
+        }
+    }
+
+    private void confirmRestart()
+    {
+        javafx.scene.control.Alert alert =
+                new javafx.scene.control.Alert(
+                        javafx.scene.control.Alert.AlertType.CONFIRMATION
+                );
+
+        alert.setTitle("Reiniciar partida");
+        alert.setHeaderText("¿Deseas reiniciar la partida?");
+        alert.setContentText("Se perderá el progreso actual.");
+
+        alert.showAndWait().ifPresent(response ->
+        {
+            if(response == javafx.scene.control.ButtonType.OK)
+            {
+                game.newGame();
+
+                clearSelectionState();
+                clearHints();
+
+                refreshBoard();
+            }
+        });
+    }
+
+    private void clearSelectionState()
+    {
+        selectedSrc = null;
+        selectedSrcI = -1;
+        selectedCardI = -1;
+    }
+
+    private void updateButtons()
+    {
+        undoBtn.setDisable(!game.canUndo());
+        hintBtn.setDisable(game.getGameOver());
+        resetBtn.setDisable(false);
     }
 
     public Parent getRoot()
