@@ -9,7 +9,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.control.Label;
@@ -55,7 +57,7 @@ public class EightOffView
 
     private void createLayout()
     {
-        root = new VBox(175);
+        root = new VBox(15);
         root.setPadding(new Insets(20));
         root.setAlignment(Pos.TOP_CENTER);
         root.setStyle("-fx-background-color: #24543D;");
@@ -68,9 +70,17 @@ public class EightOffView
 
         gameArea.getChildren().addAll(foundations, gameBoard);
 
+        ScrollPane scrollPane = new ScrollPane(gameArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(false);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle("-fx-background: #24543D; -fx-background-color: #24543D;");
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
         HBox buttons = createButtons();
 
-        root.getChildren().addAll(gameArea, buttons);
+        root.getChildren().addAll(scrollPane, buttons);
     }
 
     private VBox createGameBoard()

@@ -475,7 +475,6 @@ public class EightOff
             return hints;
         }
 
-        // TABLE -> TABLE
         for(int i = 0; i < 8; i ++)
         {
             for(int j = 0; j < table[i].size(); j ++)
@@ -491,19 +490,19 @@ public class EightOff
                 {
                     if(i != k && canPlaceOnTable(cards.getFirst(), k))
                     {
-                        hints.addLast(new Move(
-                                cards,
-                                Move.Location.TABLE,
-                                i,
-                                Move.Location.TABLE,
-                                k
+                        hints.addLast(new Move
+                        (
+                            cards,
+                            Move.Location.TABLE,
+                            i,
+                            Move.Location.TABLE,
+                            k
                         ));
                     }
                 }
             }
         }
 
-        // TABLE -> FOUNDATION
         for(int i = 0; i < 8; i ++)
         {
             Card card = table[i].getLast();
@@ -517,19 +516,19 @@ public class EightOff
                         SimpleList<Card> cards = new SimpleList<Card>();
                         cards.addLast(card);
 
-                        hints.addLast(new Move(
-                                cards,
-                                Move.Location.TABLE,
-                                i,
-                                Move.Location.FOUNDATION,
-                                j
+                        hints.addLast(new Move
+                        (
+                            cards,
+                            Move.Location.TABLE,
+                            i,
+                            Move.Location.FOUNDATION,
+                            j
                         ));
                     }
                 }
             }
         }
 
-        // RESERVE -> TABLE
         for(int i = 0; i < 8; i ++)
         {
             if(reserve[i] != null)
@@ -541,32 +540,37 @@ public class EightOff
                         SimpleList<Card> cards = new SimpleList<Card>();
                         cards.addLast(reserve[i]);
 
-                        hints.addLast(new Move(
-                                cards,
-                                Move.Location.RESERVE,
-                                i,
-                                Move.Location.TABLE,
-                                j
+                        hints.addLast(new Move
+                        (
+                            cards,
+                            Move.Location.RESERVE,
+                            i,
+                            Move.Location.TABLE,
+                            j
                         ));
                     }
                 }
             }
         }
 
-        // RESERVE -> FOUNDATION
-        for(int i = 0; i < 8; i ++) {
-            if (reserve[i] != null) {
-                for (int j = 0; j < 4; j++) {
-                    if (canPlaceOnFoundation(reserve[i], j)) {
+        for(int i = 0; i < 8; i ++)
+        {
+            if (reserve[i] != null)
+            {
+                for (int j = 0; j < 4; j ++)
+                {
+                    if (canPlaceOnFoundation(reserve[i], j))
+                    {
                         SimpleList<Card> cards = new SimpleList<Card>();
                         cards.addLast(reserve[i]);
 
-                        hints.addLast(new Move(
-                                cards,
-                                Move.Location.RESERVE,
-                                i,
-                                Move.Location.FOUNDATION,
-                                j
+                        hints.addLast(new Move
+                        (
+                            cards,
+                            Move.Location.RESERVE,
+                            i,
+                            Move.Location.FOUNDATION,
+                            j
                         ));
                     }
                 }
@@ -590,7 +594,23 @@ public class EightOff
 
     public boolean hasAvailableMoves()
     {
-        return !getHints().isEmpty();
+        if(!getHints().isEmpty())
+        {
+            return true;
+        }
+
+        if(getAvailableReserveSlot() != -1)
+        {
+            for(int i = 0; i < 8; i ++)
+            {
+                if(table[i].getLast() != null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private void updateGameState()
