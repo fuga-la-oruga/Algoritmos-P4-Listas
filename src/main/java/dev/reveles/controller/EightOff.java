@@ -149,8 +149,6 @@ public class EightOff
         return won;
     }
 
-    // ------------------------------
-
     private Card getSourceCard(Move.Location src, int i)
     {
         if(src == Move.Location.TABLE)
@@ -178,7 +176,7 @@ public class EightOff
 
     private boolean canPlaceOnTable(Card card, int col)
     {
-        if(col < 0 || col >= 8)
+        if(card == null || col < 0 || col >= 8)
         {
             return false;
         }
@@ -195,7 +193,7 @@ public class EightOff
 
     private boolean canPlaceOnFoundation(Card card, int i)
     {
-        if(i < 0 || i >= 4)
+        if(card == null || i < 0 || i >= 4)
         {
             return false;
         }
@@ -213,6 +211,49 @@ public class EightOff
         }
 
         return card.getValue() == top.getValue() + 1;
+    }
+
+    private SimpleList<Card> getMovableSequence(int col, int start)
+    {
+        if(col < 0 || col >= 8)
+        {
+            return null;
+        }
+
+        if(start < 0 || start >= table[col].size())
+        {
+            return null;
+        }
+
+        SimpleList<Card> sequence = new SimpleList<Card>();
+
+        Card previous = null;
+
+        for(int i = start; i < table[col].size(); i ++)
+        {
+            Card current = table[col].get(i);
+
+            if(previous != null)
+            {
+                boolean sameSuit = previous.getSuit() == current.getSuit();
+                boolean descending = previous.getValue() == current.getValue() + 1;
+
+                if(!sameSuit || !descending)
+                {
+                    return null;
+                }
+            }
+
+            sequence.addLast(current);
+            previous = current;
+        }
+
+        return sequence;
+    }
+
+    public boolean isSelectable(int col, int cardIndex)
+    {
+        return getMovableSequence(col, cardIndex) != null;
     }
 
     public boolean isValidMove
@@ -242,6 +283,11 @@ public class EightOff
 
         if(dest == Move.Location.TABLE)
         {
+            if(src == Move.Location.TABLE && srcI == destI)
+            {
+                return false;
+            }
+
             return canPlaceOnTable(card, destI);
         }
 
@@ -268,9 +314,30 @@ public class EightOff
         return false;
     }
 
-    // ------------------------------
+    public boolean isValidSequenceMove(int srcI, int cardIndex, int destI)
+    {
+        if(gameOver || srcI < 0 || srcI >= 8 || destI < 0 || destI >= 8 || srcI == destI)
+        {
+            return false;
+        }
 
-    public boolean moveCard(Move.Location src, int srcI, Move.Location dest, int destI)
+        SimpleList<Card> sequence = getMovableSequence(srcI, cardIndex);
+
+        if(sequence == null)
+        {
+            return false;
+        }
+
+        return canPlaceOnTable(sequence.getFirst(), destI);
+    }
+
+    public boolean moveCard
+    (
+        Move.Location src,
+        int srcI,
+        Move.Location dest,
+        int destI
+    )
     {
         if(!isValidMove(src, srcI, dest, destI))
         {
@@ -278,6 +345,9 @@ public class EightOff
         }
 
         Card card = getSourceCard(src, srcI);
+
+        SimpleList<Card> cards = new SimpleList<Card>();
+        cards.addLast(card);
 
         if(src == Move.Location.TABLE)
         {
@@ -288,21 +358,9 @@ public class EightOff
             reserve[srcI] = null;
         }
 
-        if(dest == Move.Location.TABLE)
-        {
-            table[destI].addLast(card);
-        }
-        else if(dest == Move.Location.RESERVE)
-        {
-            reserve[destI] = card;
-        }
-        else if(dest == Move.Location.FOUNDATION)
-        {
-            foundations[destI].addLast(card);
-        }
+        placeCards(cards, dest, destI);
 
-        Move move = new Move(card, src, srcI,
-                dest, destI);
+        Move move = new Move(cards, src, srcI, dest, destI);
 
         history.addFirst(move);
 
@@ -311,7 +369,61 @@ public class EightOff
         return true;
     }
 
-    // ------------------------------
+    public boolean moveSequence(int srcI, int cardIndex, int destI)
+    {
+        if(!isValidSequenceMove(srcI, cardIndex, destI))
+        {
+            return false;
+        }
+
+        SimpleList<Card> cards = getMovableSequence(srcI, cardIndex);
+
+        for(int i = 0; i < cards.size(); i ++)
+        {
+            table[srcI].removeLast();
+        }
+
+        placeCards(cards, Move.Location.TABLE, destI);
+
+        Move move = new Move
+        (
+            cards,
+            Move.Location.TABLE,
+            srcI,
+            Move.Location.TABLE,
+            destI
+        );
+
+        history.addFirst(move);
+
+        updateGameState();
+
+        return true;
+    }
+
+    private void placeCards
+    (
+        SimpleList<Card> cards,
+        Move.Location dest,
+        int destI
+    )
+    {
+        if(dest == Move.Location.TABLE)
+        {
+            for(int i = 0; i < cards.size(); i ++)
+            {
+                table[destI].addLast(cards.get(i));
+            }
+        }
+        else if(dest == Move.Location.RESERVE)
+        {
+            reserve[destI] = cards.getFirst();
+        }
+        else if(dest == Move.Location.FOUNDATION)
+        {
+            foundations[destI].addLast(cards.getFirst());
+        }
+    }
 
     public boolean undoMove()
     {
@@ -322,11 +434,14 @@ public class EightOff
 
         Move move = history.removeFirst();
 
-        Card card = move.getCard();
+        SimpleList<Card> cards = move.getCards();
 
         if(move.getDestination() == Move.Location.TABLE)
         {
-            table[move.getDestinationIndex()].removeLast();
+            for(int i = 0; i < cards.size(); i ++)
+            {
+                table[move.getDestinationIndex()].removeLast();
+            }
         }
         else if(move.getDestination() == Move.Location.RESERVE)
         {
@@ -339,11 +454,14 @@ public class EightOff
 
         if(move.getSource() == Move.Location.TABLE)
         {
-            table[move.getSourceIndex()].addLast(card);
+            for(int i = 0; i < cards.size(); i ++)
+            {
+                table[move.getSourceIndex()].addLast(cards.get(i));
+            }
         }
         else if(move.getSource() == Move.Location.RESERVE)
         {
-            reserve[move.getSourceIndex()] = card;
+            reserve[move.getSourceIndex()] = cards.getFirst();
         }
 
         updateGameState();
@@ -351,87 +469,160 @@ public class EightOff
         return true;
     }
 
-    // ------------------------------
-
-    public Move getHint()
+    public SimpleList<Move> getHints()
     {
+        SimpleList<Move> hints = new SimpleList<Move>();
+
         if(gameOver)
         {
-            return null;
+            return hints;
         }
 
+        // TABLE -> TABLE
+        for(int i = 0; i < 8; i ++)
+        {
+            for(int j = 0; j < table[i].size(); j ++)
+            {
+                SimpleList<Card> cards = getMovableSequence(i, j);
+
+                if(cards == null)
+                {
+                    continue;
+                }
+
+                for(int k = 0; k < 8; k ++)
+                {
+                    if(i != k && canPlaceOnTable(cards.getFirst(), k))
+                    {
+                        hints.addLast(new Move(
+                                cards,
+                                Move.Location.TABLE,
+                                i,
+                                Move.Location.TABLE,
+                                k
+                        ));
+                    }
+                }
+            }
+        }
+
+        // TABLE -> FOUNDATION
         for(int i = 0; i < 8; i ++)
         {
             Card card = table[i].getLast();
 
             if(card != null)
             {
-                Move move = findMove(Move.Location.TABLE, i);
-
-                if(move != null)
+                for(int j = 0; j < 4; j ++)
                 {
-                    return move;
+                    if(canPlaceOnFoundation(card, j))
+                    {
+                        SimpleList<Card> cards = new SimpleList<Card>();
+                        cards.addLast(card);
+
+                        hints.addLast(new Move(
+                                cards,
+                                Move.Location.TABLE,
+                                i,
+                                Move.Location.FOUNDATION,
+                                j
+                        ));
+                    }
                 }
             }
         }
 
+        // RESERVE -> TABLE
         for(int i = 0; i < 8; i ++)
         {
             if(reserve[i] != null)
             {
-                Move move = findMove(Move.Location.RESERVE, i);
-
-                if(move != null)
+                for(int j = 0; j < 8; j ++)
                 {
-                    return move;
+                    if(canPlaceOnTable(reserve[i], j))
+                    {
+                        SimpleList<Card> cards = new SimpleList<Card>();
+                        cards.addLast(reserve[i]);
+
+                        hints.addLast(new Move(
+                                cards,
+                                Move.Location.RESERVE,
+                                i,
+                                Move.Location.TABLE,
+                                j
+                        ));
+                    }
                 }
             }
         }
 
-        return null;
-    }
-
-    private Move findMove(Move.Location src, int srcI)
-    {
-        Card card = getSourceCard(src, srcI);
-
+        // RESERVE -> FOUNDATION
         for(int i = 0; i < 8; i ++)
         {
-            if(src != Move.Location.TABLE || srcI != i)
+            if(reserve[i] != null)
             {
-                if(isValidMove(src, srcI, Move.Location.TABLE, i))
+                for(int j = 0; j < 4; j ++)
                 {
-                    return new Move(card, src, srcI, Move.Location.TABLE, i);
+                    if(canPlaceOnFoundation(reserve[i], j))
+                    {
+                        SimpleList<Card> cards = new SimpleList<Card>();
+                        cards.addLast(reserve[i]);
+
+                        hints.addLast(new Move(
+                                cards,
+                                Move.Location.RESERVE,
+                                i,
+                                Move.Location.FOUNDATION,
+                                j
+                        ));
+                    }
                 }
             }
         }
 
-        for(int i = 0; i < 4; i ++)
+        // TABLE -> RESERVE
+        int slot = getAvailableReserveSlot();
+
+        if(slot != -1)
         {
-            if(isValidMove(src, srcI, Move.Location.FOUNDATION, i))
+            for(int i = 0; i < 8; i ++)
             {
-                return new Move(card, src, srcI, Move.Location.FOUNDATION, i);
+                Card card = table[i].getLast();
+
+                if(card != null)
+                {
+                    SimpleList<Card> cards = new SimpleList<Card>();
+                    cards.addLast(card);
+
+                    hints.addLast(new Move(
+                            cards,
+                            Move.Location.TABLE,
+                            i,
+                            Move.Location.RESERVE,
+                            slot
+                    ));
+                }
             }
         }
 
-        if(src == Move.Location.TABLE)
-        {
-            int slot = getAvailableReserveSlot();
-
-            if(slot != -1)
-            {
-                return new Move(card, src, srcI, Move.Location.RESERVE, slot);
-            }
-        }
-
-        return null;
+        return hints;
     }
 
-    // ------------------------------
+    public Move getHint()
+    {
+        SimpleList<Move> hints = getHints();
+
+        if(hints.isEmpty())
+        {
+            return null;
+        }
+
+        return hints.getFirst();
+    }
 
     public boolean hasAvailableMoves()
     {
-        return getHint() != null;
+        return !getHints().isEmpty();
     }
 
     private void updateGameState()
