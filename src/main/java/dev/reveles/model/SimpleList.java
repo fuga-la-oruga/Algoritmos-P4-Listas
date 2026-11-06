@@ -3,77 +3,131 @@ package dev.reveles.model;
 public class SimpleList<T>
 {
     private Node<T> start;
-
-    // ------------------------------
+    private int size;
 
     public SimpleList()
     {
         start = null;
+        size = 0;
     }
 
-    // ------------------------------
-
-    public void addStart(T data)
+    public void addFirst(T data)
     {
         Node<T> node = new Node<T>(data);
-        if(start != null)
-        {
-            node.setNext(start);
-        }
+        node.setNext(start);
         start = node;
+        size ++;
     }
 
-    public void addEnd(T data)
+    public void addLast(T data)
     {
         Node<T> node = new Node<T>(data);
+
         if(start == null)
         {
             start = node;
-            return;
         }
-        Node<T> i = start;
-        while(i.getNext() != null)
+        else
         {
-            i = i.getNext();
+            Node<T> current = start;
+
+            while(current.getNext() != null)
+            {
+                current = current.getNext();
+            }
+
+            current.setNext(node);
         }
-        i.setNext(node);
+
+        size++;
     }
 
-    public T removeStart()
+    public T removeFirst()
     {
         if(start == null)
         {
             return null;
         }
-        T toReturn = start.getData();
-        if(start.getNext() == null)
-        {
-            start = null;
-            return toReturn;
-        }
+
+        T data = start.getData();
         start = start.getNext();
-        return toReturn;
+        size --;
+
+        return data;
     }
 
-    public T removeEnd()
+    public T removeLast()
     {
         if(start == null)
         {
             return null;
         }
+
         if(start.getNext() == null)
         {
-            T toReturn = start.getData();
-            start = null;
-            return toReturn;
+            return removeFirst();
         }
-        Node<T> i = start;
-        while(i.getNext().getNext() != null)
+
+        Node<T> current = start;
+
+        while(current.getNext().getNext() != null)
         {
-            i = i.getNext();
+            current = current.getNext();
         }
-        T toReturn = i.getNext().getData();
-        i.setNext(null);
-        return toReturn;
+
+        T data = current.getNext().getData();
+        current.setNext(null);
+        size--;
+
+        return data;
+    }
+
+    public T getFirst()
+    {
+        return start == null ? null : start.getData();
+    }
+
+    public T getLast()
+    {
+        if(start == null)
+        {
+            return null;
+        }
+
+        Node<T> current = start;
+
+        while(current.getNext() != null)
+        {
+            current = current.getNext();
+        }
+
+        return current.getData();
+    }
+
+    public T get(int index)
+    {
+        if(index < 0 || index >= size)
+        {
+            return null;
+        }
+
+        Node<T> current = start;
+
+        for(int i = 0; i < index; i ++)
+        {
+            current = current.getNext();
+        }
+
+        return current.getData();
+    }
+
+    public boolean isEmpty()
+    {
+        return start == null;
+    }
+
+    public int size()
+    {
+        return size;
     }
 }
