@@ -488,17 +488,27 @@ public class EightOff
 
                 for(int k = 0; k < 8; k ++)
                 {
-                    if(i != k && canPlaceOnTable(cards.getFirst(), k))
+                    if(i == k || !canPlaceOnTable(cards.getFirst(), k))
                     {
-                        hints.addLast(new Move
-                        (
-                            cards,
-                            Move.Location.TABLE,
-                            i,
-                            Move.Location.TABLE,
-                            k
-                        ));
+                        continue;
                     }
+
+                    if(table[k].isEmpty())
+                    {
+                        if(cards.getFirst().getValue() != 13 || j == 0)
+                        {
+                            continue;
+                        }
+                    }
+
+                    hints.addLast(new Move
+                    (
+                        cards,
+                        Move.Location.TABLE,
+                        i,
+                        Move.Location.TABLE,
+                        k
+                ));
                 }
             }
         }
@@ -537,6 +547,11 @@ public class EightOff
                 {
                     if(canPlaceOnTable(reserve[i], j))
                     {
+                        if(table[j].isEmpty() && reserve[i].getValue() != 13)
+                        {
+                            continue;
+                        }
+
                         SimpleList<Card> cards = new SimpleList<Card>();
                         cards.addLast(reserve[i]);
 
@@ -555,11 +570,11 @@ public class EightOff
 
         for(int i = 0; i < 8; i ++)
         {
-            if (reserve[i] != null)
+            if(reserve[i] != null)
             {
-                for (int j = 0; j < 4; j ++)
+                for(int j = 0; j < 4; j ++)
                 {
-                    if (canPlaceOnFoundation(reserve[i], j))
+                    if(canPlaceOnFoundation(reserve[i], j))
                     {
                         SimpleList<Card> cards = new SimpleList<Card>();
                         cards.addLast(reserve[i]);
@@ -594,9 +609,41 @@ public class EightOff
 
     public boolean hasAvailableMoves()
     {
-        if(!getHints().isEmpty())
+        for(int i = 0; i < 8; i ++)
         {
-            return true;
+            for(int j = 0; j < table[i].size(); j ++)
+            {
+                SimpleList<Card> cards = getMovableSequence(i, j);
+
+                if(cards == null)
+                {
+                    continue;
+                }
+
+                for(int k = 0; k < 8; k ++)
+                {
+                    if(i != k && canPlaceOnTable(cards.getFirst(), k))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < 8; i ++)
+        {
+            Card card = table[i].getLast();
+
+            if(card != null)
+            {
+                for(int j = 0; j < 4; j ++)
+                {
+                    if(canPlaceOnFoundation(card, j))
+                    {
+                        return true;
+                    }
+                }
+            }
         }
 
         if(getAvailableReserveSlot() != -1)
@@ -604,6 +651,30 @@ public class EightOff
             for(int i = 0; i < 8; i ++)
             {
                 if(table[i].getLast() != null)
+                {
+                    return true;
+                }
+            }
+        }
+
+        for(int i = 0; i < 8; i ++)
+        {
+            if(reserve[i] == null)
+            {
+                continue;
+            }
+
+            for(int j = 0; j < 8; j ++)
+            {
+                if(canPlaceOnTable(reserve[i], j))
+                {
+                    return true;
+                }
+            }
+
+            for(int j = 0; j < 4; j ++)
+            {
+                if(canPlaceOnFoundation(reserve[i], j))
                 {
                     return true;
                 }

@@ -8,6 +8,7 @@ import dev.reveles.model.Suit;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
@@ -463,6 +464,11 @@ public class EightOffView
             clearSelectionState();
             clearHints();
             refreshBoard();
+
+            if(game.hasWon())
+            {
+                showVictoryMessage();
+            }
         }
         else
         {
@@ -592,6 +598,15 @@ public class EightOffView
         undoBtn.setDisable(!game.canUndo());
         hintBtn.setDisable(game.getGameOver());
         resetBtn.setDisable(false);
+    }
+
+    private void showVictoryMessage()
+    {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Partida completada");
+        alert.setHeaderText("¡Has ganado!");
+        alert.setContentText("Has conseguido completar las cuatro fundaciones.");
+        alert.showAndWait();
     }
 
     public Parent getRoot()
