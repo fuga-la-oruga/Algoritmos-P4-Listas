@@ -153,13 +153,16 @@ public class EightOffView
 
         boolean selected = isSelectedTableCard(col, cardI);
         boolean hinted = hintedTable[col][cardI];
+        boolean selectable = game.isSelectable(col, cardI);
 
         String borderColor = selected ? "#FFD54F" : hinted ? "#42A5F5" : "#252525";
         double borderWidth = selected || hinted ? 3 : 1.2;
 
+        String bgColor = selectable ? "#F5F1E8" : "#C5BFB3";
+
         pane.setStyle
         (
-            "-fx-background-color: #F5F1E8;" +
+            "-fx-background-color: " + bgColor + ";" +
             "-fx-border-color: " + borderColor + ";" +
             "-fx-border-width: " + borderWidth + ";" +
             "-fx-border-radius: 6;" +
