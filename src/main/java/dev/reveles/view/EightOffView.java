@@ -3,6 +3,7 @@ package dev.reveles.view;
 import dev.reveles.controller.EightOff;
 import dev.reveles.controller.Move;
 import dev.reveles.model.Card;
+import dev.reveles.model.Suit;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -147,7 +148,7 @@ public class EightOffView
         (
             "-fx-font-size: 14px;" +
             "-fx-font-weight: bold;" +
-            "-fx-text-fill: #222222;"
+            "-fx-text-fill: " + getCardColor(card) + ";"
         );
 
         pane.getChildren().add(value);
@@ -319,7 +320,7 @@ public class EightOffView
         (
             "-fx-font-size: 14px;" +
             "-fx-font-weight: bold;" +
-            "-fx-text-fill: #222222;"
+            "-fx-text-fill: " + getCardColor(card) + ";"
         );
 
         slot.getChildren().add(value);
@@ -443,6 +444,16 @@ public class EightOffView
         {
             clearSelection();
         }
+    }
+
+    private String getCardColor(Card card)
+    {
+        if(card.getSuit() == Suit.HEARTS || card.getSuit() == Suit.DIAMONDS)
+        {
+            return "#D32F2F";
+        }
+
+        return "#222222";
     }
 
     public Parent getRoot()
