@@ -43,6 +43,7 @@ public class EightOffView
     private boolean[] hintedReserve = new boolean[8];
 
     private boolean showingHints;
+    private Label moveStatusLabel;
 
     // ------------------------------
 
@@ -79,7 +80,7 @@ public class EightOffView
         scrollPane.setStyle("-fx-background: #24543D; -fx-background-color: #24543D;");
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
-        HBox buttons = createButtons();
+        VBox buttons = createButtons();
 
         root.getChildren().addAll(scrollPane, buttons);
     }
@@ -235,8 +236,22 @@ public class EightOffView
         return slot;
     }
 
-    private HBox createButtons()
+    private VBox createButtons()
     {
+        VBox container = new VBox(8);
+        container.setAlignment(Pos.CENTER);
+
+        moveStatusLabel = new Label("No hay movimientos disponibles");
+        moveStatusLabel.setStyle
+        (
+            "-fx-text-fill: #FFD54F;" +
+            "-fx-font-size: 16px;" +
+            "-fx-font-weight: bold;"
+        );
+
+        moveStatusLabel.setVisible(false);
+        moveStatusLabel.setManaged(false);
+
         HBox buttons = new HBox(15);
         buttons.setAlignment(Pos.CENTER);
 
@@ -252,14 +267,11 @@ public class EightOffView
         undoBtn.setOnAction(event -> undoMove());
         resetBtn.setOnAction(event -> confirmRestart());
 
-        buttons.getChildren().addAll
-        (
-            hintBtn,
-            undoBtn,
-            resetBtn
-        );
+        buttons.getChildren().addAll(hintBtn, undoBtn, resetBtn);
 
-        return buttons;
+        container.getChildren().addAll(moveStatusLabel, buttons);
+
+        return container;
     }
 
     private void refreshBoard()
@@ -601,6 +613,11 @@ public class EightOffView
         undoBtn.setDisable(!game.canUndo());
         hintBtn.setDisable(game.getGameOver());
         resetBtn.setDisable(false);
+
+        boolean showMessage = game.getGameOver() && !game.hasWon();
+
+        moveStatusLabel.setVisible(showMessage);
+        moveStatusLabel.setManaged(showMessage);
     }
 
     private void showVictoryMessage()
