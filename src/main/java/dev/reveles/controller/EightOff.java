@@ -554,14 +554,10 @@ public class EightOff
         }
 
         // RESERVE -> FOUNDATION
-        for(int i = 0; i < 8; i ++)
-        {
-            if(reserve[i] != null)
-            {
-                for(int j = 0; j < 4; j ++)
-                {
-                    if(canPlaceOnFoundation(reserve[i], j))
-                    {
+        for(int i = 0; i < 8; i ++) {
+            if (reserve[i] != null) {
+                for (int j = 0; j < 4; j++) {
+                    if (canPlaceOnFoundation(reserve[i], j)) {
                         SimpleList<Card> cards = new SimpleList<Card>();
                         cards.addLast(reserve[i]);
 
@@ -573,31 +569,6 @@ public class EightOff
                                 j
                         ));
                     }
-                }
-            }
-        }
-
-        // TABLE -> RESERVE
-        int slot = getAvailableReserveSlot();
-
-        if(slot != -1)
-        {
-            for(int i = 0; i < 8; i ++)
-            {
-                Card card = table[i].getLast();
-
-                if(card != null)
-                {
-                    SimpleList<Card> cards = new SimpleList<Card>();
-                    cards.addLast(card);
-
-                    hints.addLast(new Move(
-                            cards,
-                            Move.Location.TABLE,
-                            i,
-                            Move.Location.RESERVE,
-                            slot
-                    ));
                 }
             }
         }
